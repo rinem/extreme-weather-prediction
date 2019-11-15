@@ -19,7 +19,22 @@ app = Flask(__name__)
 
 
 def preprocess(state, year):
-    pass
+    data = pd.read_csv('Data/'+state+'.csv')
+    temp = data[['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL',
+       'AUG', 'SEP', 'OCT', 'NOV', 'DEC']].loc[data['YEAR'] == year]
+
+    data_year = np.asarray(temp[['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL',
+        'AUG', 'SEP', 'OCT', 'NOV', 'DEC']])
+
+    X_year = None; y_year = None
+    for i in range(data_year.shape[1]-3):
+        if X_year is None:
+            X_year = data_year[:, i:i+3]
+            y_year = data_year[:, i+3]
+        else:
+            X_year = np.concatenate((X_year, data_year[:, i:i+3]), axis=0)
+            y_year = np.concatenate((y_year, data_year[:, i+3]), axis=0)
+    return (X_year, y_year)
 
 @app.route('/predict',methods=['POST'])
 def predict():
@@ -54,6 +69,11 @@ def rainfall():
         p_in = open("graphs/"+fname+".pkl","rb")
         model = pickle.load(p_in)
         y_pred = model.predict(x_test)
+        result = {}
+        result['actual'] = list(y_test)
+        result['prediction'] = list(y_pred)
+        print(result)
+        return result
 
 
 if __name__ == '__main__':
